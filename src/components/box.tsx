@@ -10,7 +10,7 @@ interface BoxProps{
     status: BoxStatus;
 }
 
-export default function Box({ value, status }:BoxProps) {
+export default function Box({ value, status }: BoxProps) {
     const boxStatus = classes({
         correct: status === 'correct',
         present: status === 'present',
