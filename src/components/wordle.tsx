@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useWindow } from "../hooks/useWindow";
 import { getWordOfTheDay, isValidWord } from "../service/request";
 import Keyboard from "./keyboard";
+import Modal from './modal';
 import RowCompleted from "./rowCompleted";
 import RowCurrent from "./rowCurrent";
 import RowEmpty from "./rowEmpty";
@@ -122,6 +123,19 @@ export default function Wordle() {
 
     return (
         <>
+            {gameStatus === GameStatus.Won ? (
+                <Modal
+                    type="won"
+                    completedWords={completedWords}
+                    solution={wordOfTheDay}
+                />
+            ) : gameStatus === GameStatus.Lost ? (
+                <Modal
+                    type="lost"
+                    completedWords={completedWords}
+                    solution={wordOfTheDay}
+                />
+            ) : null}
             <div className={styles.mainContainer}>
                 {
                     completedWords.map((word, i) => (
