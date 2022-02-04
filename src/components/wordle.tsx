@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import { useWindow } from "../hooks/useWindow";
+import { getWordOfTheDay, isValidWord } from "../service/request";
+import Keyboard from "./keyboard";
 import RowCompleted from "./rowCompleted";
+import RowCurrent from "./rowCurrent";
 import RowEmpty from "./rowEmpty";
 import { GameStatus } from "./types";
+
+import styles from './wordle.module.scss'
 
 const keys = [
     'A',
@@ -44,19 +49,28 @@ export default function Wordle() {
     useWindow('keydown', handleKeyDown);
 
     useEffect(() => {
-        setWordOfTheDay("break");
+        setWordOfTheDay(getWordOfTheDay());
     }, [])
 
     function handleKeyDown(event: KeyboardEvent) {
-        const letter = event.key.toUpperCase();
+        const key = event.key.toUpperCase();
 
-        if(event.key === 'Backspace' && currentWord.length > 0) {
-            onDelete()
+        onKeyPressed(key)
+    }
+
+    function onKeyPressed(key:string){
+        if(gameStatus !== GameStatus.Playing) {
+            return;
+        }
+
+        if(key === 'BACKSPACE' && currentWord.length > 0) {
+            onDelete();
             return;
         }
 
         
-        if(event.key === 'Enter') {
+        if(key=== 'ENTER' && currentWord.length === 5 && turn < 6) {
+            onEnter();
             return;
         }
 
@@ -65,8 +79,8 @@ export default function Wordle() {
             return;
         }
 
-        if(keys.includes(letter)) {
-            onInput(letter);
+        if(keys.includes(key)) {
+            onInput(key);
             return;
         }
     }
@@ -81,13 +95,59 @@ export default function Wordle() {
         setCurrentWord(newWord);
     }
 
+    function onEnter() {
+        
+        if(currentWord === wordOfTheDay) {
+            //win
+            setCompletedWords([ ...completedWords, currentWord])
+            setGameStatus(GameStatus.Won);
+            return
+        }
+
+        if(turn === 6) {
+            //lose
+            setCompletedWords([ ...completedWords, currentWord ])
+            setGameStatus(GameStatus.Lost);
+            return
+        }
+
+        if(currentWord.length === 5 && !isValidWord(currentWord)) {
+            alert('Not a valid word')
+        }
+
+        setCompletedWords([ ...completedWords, currentWord ]);
+        setTurn(turn + 1);
+        setCurrentWord('');
+    }
+
     return (
-    <div>
-        <RowCompleted word='sabia' solution={wordOfTheDay} />
-        <RowEmpty />
-        <RowEmpty />
-        <RowEmpty />
-        <RowEmpty />
-    </div>
+        <>
+            <div className={styles.mainContainer}>
+                {
+                    completedWords.map((word, i) => (
+                        <RowCompleted key ={i} word={word} solution={wordOfTheDay} />
+                    ))
+                }
+
+                {
+                    gameStatus === GameStatus.Playing ? (
+                        <RowCurrent word={currentWord}/>
+                    ) : null
+                }
+
+                {
+                    Array.from(Array(6 - turn)).map((_, i) => (
+                        <RowEmpty key={i} />
+                    ))
+                }
+            </div>
+
+            <Keyboard 
+            keys={keys}
+            onKeyPressed={onKeyPressed}
+            />
+        </>
+
+
     )
 } 
